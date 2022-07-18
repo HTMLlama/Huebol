@@ -21,7 +21,7 @@ int fadeHue = 100;
 
 int pcmrHue = 0;
 int bgt = 200;
-String rgbStr1 = "FFFFFF";
+String rgbStr1 = "0000FF";
 
 WiFiClient wiFiClient;
 PubSubClient pubSubClient(wiFiClient);
@@ -40,6 +40,13 @@ int roller(int item) {
   return item;
 }
 
+char* toChars(String strToConver) {
+  int len = strToConver.length() + 1;
+  char strArray[len];
+  strToConver.toCharArray(strArray, len);
+  return strArray;
+}
+
 unsigned long toColorCode(String colorHex) {
   int len = colorHex.length() + 1;
   char hexArray[len];
@@ -49,6 +56,7 @@ unsigned long toColorCode(String colorHex) {
 }
 
 void setFx(String selectedFx) {
+  bool isValidFx = true;
   if (selectedFx == "solid") {
     fx = SOLID;
   } else if(selectedFx == "pcmr") {
@@ -59,16 +67,14 @@ void setFx(String selectedFx) {
     fx = COLOR_FADE;
   } else {
     pubSubClient.publish("error/huebol/firsties", "Invalid Effect", 2);
+    isValidFx = false;
   }
-}
 
-void maybeBuildXmas() {
-  if (!isXmasSet) {
-    for (size_t i = 0; i < NUM_LED; i++) {
-      leds[i] = CRGB().setHSV(random(0, 255), random(200, 255), random(200, 255));
-    }
-    isXmasSet = true;
+  if (isValidFx) {
+    char* fxArray = toChars(selectedFx);
+    pubSubClient.publish("huebol/firsties/fx/state", fxArray, 1);
   }
+  
 }
 
 void displayLights() {
@@ -115,13 +121,16 @@ void callback(char* topic, byte* message, unsigned int lenght) {
 
   String topicStr(topic);
   String category = topicStr.substring(16); 
+  char* messageArray = toChars(messageTemp);
 
   if (category == "fx") {
     setFx(messageTemp);
   } else if (category == "rgb1") {
     rgbStr1 = messageTemp;
+    pubSubClient.publish("huebol/firsties/rgb1/state", messageArray, 1);
   } else if (category == "bgt") {
     bgt = messageTemp.toInt();
+    pubSubClient.publish("huebol/firsties/bgt/state", messageArray, 1);
   }
   
   delay(100);
