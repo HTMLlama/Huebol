@@ -7,7 +7,7 @@
 #include <soc/rtc_cntl_reg.h>
 
 #define LED_PIN 13 
-#define NUM_LED 18 
+#define NUM_LED 74
 CRGBArray<NUM_LED> leds;
 
 #define SOLID 0
@@ -66,13 +66,13 @@ void setFx(String selectedFx) {
   } else if(selectedFx == "color_fade") {
     fx = COLOR_FADE;
   } else {
-    pubSubClient.publish("error/huebol/firsties", "Invalid Effect", 2);
+    pubSubClient.publish("error/huebol/jar", "Invalid Effect", 2);
     isValidFx = false;
   }
 
   if (isValidFx) {
     char* fxArray = toChars(selectedFx);
-    pubSubClient.publish("huebol/firsties/fx/state", fxArray, 1);
+    pubSubClient.publish("huebol/jar/fx/state", fxArray, 1);
   }
   
 }
@@ -120,17 +120,18 @@ void callback(char* topic, byte* message, unsigned int lenght) {
   }
 
   String topicStr(topic);
-  String category = topicStr.substring(16); 
+  String category = topicStr.substring(11); // 16
+  Serial.println(category);
   char* messageArray = toChars(messageTemp);
 
   if (category == "fx") {
     setFx(messageTemp);
   } else if (category == "rgb1") {
     rgbStr1 = messageTemp;
-    pubSubClient.publish("huebol/firsties/rgb1/state", messageArray, 1);
+    pubSubClient.publish("huebol/jar/rgb1/state", messageArray, 1);
   } else if (category == "bgt") {
     bgt = messageTemp.toInt();
-    pubSubClient.publish("huebol/firsties/bgt/state", messageArray, 1);
+    pubSubClient.publish("huebol/jar/bgt/state", messageArray, 1);
   }
   
   delay(100);
@@ -168,9 +169,9 @@ void setupPubSub() {
 void reconnectToPubSub() {
   while(!pubSubClient.connected()) {
     Serial.println("MQTT Connecting...");
-    if (pubSubClient.connect("HuebolFirsties")) {
+    if (pubSubClient.connect("HuebolJar")) {
       Serial.println("Connected to MQTT!");
-      pubSubClient.subscribe("huebol/firsties/#");
+      pubSubClient.subscribe("huebol/jar/#");
     } else {
       Serial.println("Failed to connect to MQTT");
       Serial.print("State: ");
@@ -198,7 +199,7 @@ void setup() {
 
   delay(1500);
 
-  pubSubClient.publish("huebol/firsties/boot", "1", 2);
+  pubSubClient.publish("huebol/jar/boot", "1", 2);
 }
 
 void loop() {
